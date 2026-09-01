@@ -1,809 +1,596 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice - Ardn Holiday</title>
-    <style>
-        :root {
-            --primary-color: #1B365D;
-            --accent-color: #FF9900;
-            --bg-color: #F8FAFC;
-            --text-color: #334155;
-            --border-color: #CBD5E1;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Invoice - PG Tour & Travel</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandPrimary: '#C83E00',
+            brandOrange: '#F36700',
+            brandBg: '#F8FAFC'
+          }
         }
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        body {
-            background-color: #E2E8F0;
-            color: var(--text-color);
-            padding: 30px;
-        }
-        .invoice-container {
-            max-width: 850px;
-            margin: 0 auto;
-            background: #FFFFFF;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-            position: relative;
-            overflow: hidden; /* Mengunci watermark agar tidak meluber */
-        }
+      }
+    }
+  </script>
+  <!-- Font Awesome Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* Style Watermark Logo Multi-Halaman */
+    .invoice-watermark {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-15deg);
+      width: 320px;
+      opacity: 0.04;
+      pointer-events: none;
+      user-select: none;
+      z-index: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-        /* --- WATERMARK BACKGROUND --- */
-        .invoice-watermark {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-25deg);
-            font-size: 42px;
-            font-weight: 800;
-            color: var(--primary-color);
-            opacity: 0.04;
-            white-space: nowrap;
-            pointer-events: none;
-            user-select: none;
-            z-index: 0;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 2px solid #E2E8F0;
-            padding-bottom: 25px;
-            margin-bottom: 30px;
-            position: relative;
-            z-index: 1;
-        }
-        .company-logo {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .company-logo img {
-            width: 85px;
-            height: 85px;
-            object-fit: cover;
-            border-radius: 8px;
-            cursor: pointer;
-            border: 2px dashed #CBD5E1;
-            transition: all 0.2s ease-in-out;
-        }
-        .company-logo img:hover {
-            opacity: 0.85;
-            transform: scale(1.03);
-            border-color: var(--primary-color);
-        }
-        .company-logo.dragover img {
-            border-color: var(--primary-color);
-            background-color: #E2E8F0;
-            opacity: 0.7;
-        }
-        .company-title h1 {
-            font-size: 24px;
-            color: var(--primary-color);
-            font-weight: 700;
-        }
-        .company-title p {
-            font-size: 13px;
-            color: #64748B;
-        }
-        .company-info {
-            text-align: right;
-        }
-        .company-info h2 {
-            font-size: 20px;
-            color: var(--primary-color);
-            margin-bottom: 5px;
-        }
-        .company-info p {
-            font-size: 13px;
-            color: #475569;
-            line-height: 1.5;
-        }
-        
-        .invoice-details-box {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 25px;
-            position: relative;
-            z-index: 1;
-        }
-        .customer-section {
-            text-align: left;
-        }
-        .invoice-meta {
-            text-align: right;
-        }
-        .customer-section h3, .invoice-meta h3 {
-            margin-top: 0;
-            margin-bottom: 8px;
-            color: var(--primary-color);
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 700;
-        }
-        .customer-section p, .invoice-meta p {
-            margin: 4px 0;
-            padding: 0;
-            font-size: 13px;
-            line-height: 1.5;
-        }
-        .editable {
-            border: 1px dashed transparent;
-            padding: 2px 5px;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-        .editable:hover {
-            border-color: var(--accent-color);
-            background: #FFFBEB;
-            cursor: pointer;
-        }
-        .editable:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            background: #FFFFFF;
-            box-shadow: 0 0 0 2px rgba(27, 54, 93, 0.2);
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 25px;
-            position: relative;
-            z-index: 1;
-        }
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border: 1px solid var(--border-color);
-            font-size: 14px;
-        }
-        th {
-            background-color: var(--primary-color);
-            color: #FFFFFF;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 0.5px;
-        }
-        td input {
-            width: 100%;
-            border: none;
-            background: transparent;
-            font-size: 14px;
-            font-family: inherit;
-            color: inherit;
-        }
-        td input:focus {
-            outline: none;
-        }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        
-        .unit-img-preview {
-            width: 75px;
-            height: 55px;
-            object-fit: cover;
-            border-radius: 6px;
-            border: 1px dashed #CBD5E1;
-            cursor: pointer;
-            transition: all 0.2s;
-            background-color: #F8FAFC;
-        }
-        .unit-img-preview:hover {
-            border-color: var(--primary-color);
-            transform: scale(1.03);
-        }
-        td textarea.desc-input {
-            width: 100%;
-            border: 1px solid transparent;
-            background: transparent;
-            font-size: 13px;
-            font-family: inherit;
-            color: inherit;
-            resize: none;
-            min-height: 45px;
-            padding: 4px;
-            border-radius: 4px;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-        td textarea.desc-input:hover, td textarea.desc-input:focus {
-            border-color: #CBD5E1;
-            background: #FFFBEB;
-            outline: none;
-        }
-
-        .summary-table {
-            width: 320px;
-            margin-left: auto;
-            margin-bottom: 30px;
-            border-collapse: collapse;
-            position: relative;
-            z-index: 1;
-        }
-        .summary-table td {
-            text-align: center !important;
-            padding: 8px 12px;
-        }
-
-        /* --- REKENING PEMBAYARAN RESMI (LOCKED) --- */
-        .payment-info-box {
-            position: relative;
-            z-index: 1;
-            background-color: #F8FAFC;
-            border: 1px solid #E2E8F0;
-            border-left: 4px solid var(--primary-color);
-            border-radius: 6px;
-            padding: 12px 16px;
-            margin-bottom: 25px;
-        }
-        .payment-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            padding-bottom: 6px;
-            border-bottom: 1px dashed #CBD5E1;
-        }
-        .payment-title {
-            font-weight: 700;
-            font-size: 13px;
-            color: var(--primary-color);
-        }
-        .badge-locked {
-            font-size: 10px;
-            background-color: #E2E8F0;
-            color: #475569;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-        .bank-details-grid {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 4px 12px;
-            font-size: 12px;
-        }
-        .bank-label { color: #64748B; }
-        .bank-value { font-weight: 600; color: #0F172A; }
-        .security-notice {
-            margin-top: 8px;
-            font-size: 11px;
-            color: #DC2626;
-            line-height: 1.4;
-            background-color: #FEF2F2;
-            padding: 6px 10px;
-            border-radius: 4px;
-            border: 1px solid #FECACA;
-        }
-
-        .notes-section {
-            position: relative;
-            z-index: 1;
-            background: #F8FAFC;
-            border-left: 4px solid var(--primary-color);
-            padding: 15px 20px;
-            border-radius: 0 8px 8px 0;
-            margin-bottom: 30px;
-        }
-        .notes-section h4 {
-            font-size: 13px;
-            color: var(--primary-color);
-            margin-bottom: 5px;
-            text-transform: uppercase;
-        }
-        .notes-section p {
-            font-size: 12px;
-            color: #64748B;
-            line-height: 1.6;
-        }
-
-        .signature-container {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            justify-content: space-between;
-            margin-top: 35px;
-            page-break-inside: avoid;
-        }
-        .signature-box {
-            text-align: center;
-            min-width: 200px;
-        }
-        .signature-img-preview {
-            width: 160px;
-            height: 75px;
-            object-fit: contain;
-            cursor: pointer;
-            border: 1px dashed #CBD5E1;
-            border-radius: 4px;
-            margin: 8px 0;
-            transition: all 0.2s;
-            background-color: #F8FAFC;
-        }
-        .signature-img-preview:hover {
-            border-color: var(--primary-color);
-        }
-
-        .action-bar {
-            text-align: center;
-            margin-top: 30px;
-        }
-        .btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-size: 15px;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: background 0.2s;
-        }
-        .btn:hover {
-            background-color: #11223F;
-        }
-
-        /* --- KHUSUS CETAK / PRINT --- */
-        @media print {
-            @page {
-                margin: 0;
-            }
-            body {
-                background: white;
-                padding: 15mm;
-            }
-            .no-print, .action-bar {
-                display: none !important;
-            }
-            .invoice-container {
-                box-shadow: none;
-                padding: 0;
-            }
-            .editable {
-                border: none !important;
-                background: transparent !important;
-            }
-            .invoice-watermark {
-                opacity: 0.05 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .company-logo img {
-                border: none !important;
-                box-shadow: none !important;
-            }
-            th {
-                color: var(--primary-color) !important;
-                background-color: #F1F5F9 !important;
-                border: 1px solid var(--border-color) !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .unit-img-preview, .signature-img-preview {
-                border: none !important;
-                background: transparent !important;
-            }
-            td textarea.desc-input {
-                border: none !important;
-                background: transparent !important;
-                resize: none !important;
-                overflow: hidden !important;
-                height: auto !important;
-            }
-            .payment-info-box {
-                background-color: #F8FAFC !important;
-                border: 1px solid #CBD5E1 !important;
-                border-left: 4px solid var(--primary-color) !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .security-notice {
-                background-color: #FEF2F2 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .badge-locked {
-                display: none !important;
-            }
-        }
-    </style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background-color: white !important; padding: 0 !important; }
+      .print-shadow-none { box-shadow: none !important; border: none !important; padding: 0 !important; }
+      .invoice-watermark { 
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) rotate(-15deg) !important;
+        width: 350px !important;
+        opacity: 0.05 !important; 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; 
+      }
+      th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
 </head>
-<body>
+<body class="bg-slate-100 font-sans text-slate-800">
 
-<div class="invoice-container">
-    <!-- Watermark Background -->
-    <div class="invoice-watermark">OFFICIAL INVOICE • ARDN HOLIDAY</div>
+  <!-- SCREEN BILA TUNGGAKAN / MASA LANGGANAN HABIS -->
+  <div id="expired-screen" class="hidden fixed inset-0 bg-slate-900 bg-opacity-95 z-50 flex flex-col items-center justify-center text-white p-6">
+    <div class="bg-slate-800 p-8 rounded-2xl max-w-md text-center border border-slate-700 shadow-2xl">
+      <div class="text-rose-500 mb-4 flex justify-center text-5xl">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h2 class="text-2xl font-bold mb-2">Masa Langganan Berakhir</h2>
+      <p class="text-slate-300 text-sm mb-6">Akses sistem invoice ditangguhkan sementara. Silakan lakukan perpanjangan layanan untuk mengaktifkan kembali fitur ini.</p>
+      <a href="https://wa.me/6285174452300" class="block w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition shadow-lg shadow-emerald-600/30">Hubungi Developer</a>
+    </div>
+  </div>
 
-    <!-- Header -->
-    <div class="header">
-        <div class="company-logo" id="logoContainer">
-            <input type="file" id="logoInput" accept="image/*" style="display: none;">
-            <img id="logoImg" 
-                 src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='85' height='85'><rect width='100%' height='100%' fill='%231B365D'/><text x='50%' y='50%' fill='white' font-size='11' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'>Upload Logo</text></svg>" 
-                 alt="Ardn Holiday Logo" 
-                 title="Klik atau drag gambar ke sini untuk mengganti logo">
-            
-            <div class="company-title">
-                <h1>Ardn Holiday</h1>
-                <p>Your Global Adventure</p>
-            </div>
+  <!-- CONTAINER UTAMA -->
+  <div class="max-w-7xl mx-auto p-4 md:p-8">
+    
+    <!-- HEADER APP -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 no-print">
+      <!-- Logo & Judul Sistem -->
+      <div class="flex items-center gap-3.5">
+        <img src="logo.png" alt="PG Tour & Travel Logo" class="h-11 w-auto object-contain flex-shrink-0" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'44\' height=\'44\' viewBox=\'0 0 44 44\'><rect width=\'100%\' height=\'100%\' rx=\'10\' fill=\'%23C83E00\'/><text x=\'50%\' y=\'50%\' fill=\'white\' font-size=\'10\' font-weight=\'bold\' text-anchor=\'middle\' dominant-baseline=\'middle\' font-family=\'sans-serif\'>PG TOUR</text></svg>';">
+        <div>
+          <h1 class="text-xl font-bold text-Black leading-tight">Invoice Generator System</h1>
+          <p class="text-xs text-slate-500 font-medium">PG Tour & Travel • The Best Choice</p>
         </div>
+      </div>
 
-        <div class="company-info">
-            <h2>Ardn Holiday</h2>
-            <p>HP / Whatsapp : <span contenteditable="true" class="editable">085174452300</span></p>
-            <p>Email : <span contenteditable="true" class="editable">unvxsible@gmail.com</span></p>
-            <p>Alamat : Jl. Sungai Hulu Timur No. 4<br>Kepanjenkidul, East Java, Indonesia, 66117</p>
-        </div>
+      <!-- Action Buttons & Status -->
+      <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> System Active
+        </span>
+        <button onclick="window.print()" class="bg-brandPrimary hover:bg-[#a63300] text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition shadow-lg shadow-brandPrimary/20 flex items-center gap-2">
+          <i class="fa-solid fa-print"></i> Cetak / PDF
+        </button>
+      </div>
     </div>
 
-    <!-- Invoice Title & Customer Info -->
-    <div class="invoice-details-box">
-        <div class="customer-section">
-            <h3>Kepada :</h3>
-            <p><strong>Nama Customer :</strong> <span contenteditable="true" class="editable" style="font-weight:600;">Budi Santoso</span></p>
-            <p><strong>Nomor HP :</strong> <span contenteditable="true" class="editable">081234567890</span></p>
-            <p><strong>Alamat :</strong> <span contenteditable="true" class="editable">Jl. Mahakam No. 5 Kota Blitar</span></p>
-        </div>
-        <div class="invoice-meta">
-            <h3>Detail Invoice</h3>
-            <p><strong>No. Invoice :</strong> <span contenteditable="true" class="editable" style="font-weight:600;">AH-20260801</span></p>
-            <p><strong>Tanggal :</strong> <span contenteditable="true" class="editable">06 Agustus 2026</span></p>
-            <p><strong>Jatuh Tempo :</strong> <span contenteditable="true" class="editable">10 Agustus 2026</span></p>
-            <p><strong>Terms :</strong> <span contenteditable="true" class="editable">DP 50% & Pelunasan H-1</span></p>
-        </div>
-    </div>
-
-    <!-- Item Table -->
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 4%;">No</th>
-                <th style="width: 12%; text-align: center;">Lampiran Foto</th>
-                <th>Deskripsi / Rincian Layanan</th>
-                <th style="width: 8%; text-align: center;">Qty</th>
-                <th style="width: 8%; text-align: center;">Hari</th>
-                <th style="width: 16%; text-align: right;">Harga Satuan (Rp)</th>
-                <th style="width: 16%; text-align: right;">Total (Rp)</th>
-                <th style="width: 5%; text-align: center;" class="no-print">Aksi</th>
-            </tr>
-        </thead>
-        <tbody id="itemBody">
-            <tr>
-                <td class="text-center row-number">1</td>
-                <td class="text-center">
-                    <div class="unit-img-wrapper">
-                        <input type="file" accept="image/*" class="unit-img-input" style="display:none;" onchange="previewUnitImage(this)">
-                        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='75' height='55'><rect width='100%' height='100%' fill='%23F1F5F9'/><text x='50%' y='50%' fill='%2364748B' font-size='10' text-anchor='middle' dominant-baseline='middle'>+ Upload Foto</text></svg>" 
-                             class="unit-img-preview" 
-                             onclick="this.previousElementSibling.click()" 
-                             title="Klik untuk upload foto unit">
-                    </div>
-                </td>
-                <td>
-                    <textarea class="desc-input" oninput="autoResizeTextarea(this)" placeholder="Tulis deskripsi bebas di sini..."></textarea>
-                </td>
-                <td class="text-center"><input type="number" value="1" class="qty" oninput="calculateTotal()" style="text-align: center;"></td>
-                <td class="text-center"><input type="number" value="3" class="days" oninput="calculateTotal()" style="text-align: center;"></td>
-                <td class="text-right"><input type="text" value="350.000" class="price" oninput="calculateTotal()" style="text-align: right;"></td>
-                <td class="text-right row-total" style="font-weight: 600;">1.050.000</td>
-                <td class="text-center no-print">
-                    <button type="button" onclick="deleteRow(this)" style="background: #EF4444; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer;">✕</button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div style="margin-bottom: 25px;" class="no-print">
-        <button type="button" onclick="addRow()" class="btn" style="padding: 8px 16px; font-size: 13px; background-color: #10B981;">+ Tambah Baris</button>
-    </div>
-
-    <!-- Summary Table -->
-    <table class="summary-table">
-        <tr>
-            <td style="font-weight: 600;">Total Harga:</td>
-            <td id="grandTotal" style="font-weight: 600;">Rp 1.050.000</td>
-        </tr>
-        <tr>
-            <td style="font-weight: 600;">Diskon:</td>
-            <td>
-                <span contenteditable="true" class="editable" id="diskonInput" oninput="hitungSummary()" style="font-weight:600;">Rp 0</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="font-weight: 600;">Down Payment (DP):</td>
-            <td>
-                <span contenteditable="true" class="editable" id="dpInput" oninput="hitungSummary()" style="font-weight:600;">Rp 525.000</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="font-weight: 600; background: #F1F5F9;">Sisa Pelunasan:</td>
-            <td id="sisaPelunasan" style="font-weight: 700; background: #F1F5F9; color: var(--primary-color);">Rp 525.000</td>
-        </tr>
-    </table>
-
-    <!-- Rekening Pembayaran Resmi (Non-Editable) -->
-    <div class="payment-info-box">
-        <div class="payment-header">
-            <span class="payment-title">🔒 REKENING PEMBAYARAN RESMI</span>
-            <span class="badge-locked">OFFICIAL ACCOUNT</span>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- FORM INPUT (Kiri) -->
+      <div class="lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 no-print space-y-5 h-fit">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-Black flex items-center gap-2">
+            <i class="fa-solid fa-sliders"></i> Parameter Transaksi
+          </h2>
         </div>
         
-        <div class="bank-details-grid">
-            <span class="bank-label">Nama Bank:</span>
-            <span class="bank-value">Bank Central Asia (BCA)</span>
+        <!-- Input Header Transaksi -->
+        <div class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Nomor Invoice</label>
+              <input type="text" id="in-no" value="PGT-20260801" oninput="updateInvoiceHeader()" class="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-brandPrimary focus:bg-white outline-none transition">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Nama Customer</label>
+              <input type="text" id="in-client" value="Budi Santoso" oninput="updateInvoiceHeader()" class="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-brandPrimary focus:bg-white outline-none transition">
+            </div>
+          </div>
 
-            <span class="bank-label">No. Rekening:</span>
-            <span class="bank-value" style="letter-spacing: 0.5px;">3310650128</span>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Nomor HP / WA</label>
+              <input type="text" id="in-phone" value="081234567890" oninput="updateInvoiceHeader()" class="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-brandPrimary focus:bg-white outline-none transition">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Terms Payment</label>
+              <input type="text" id="in-terms" value="DP 50% & Pelunasan H-1" oninput="updateInvoiceHeader()" class="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-brandPrimary focus:bg-white outline-none transition">
+            </div>
+          </div>
 
-            <span class="bank-label">Atas Nama:</span>
-            <span class="bank-value">Ardiansyah Arif Faizin</span>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Tanggal Terbit</label>
+              <input type="date" id="in-tgl" onchange="updateInvoiceHeader()" class="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-brandPrimary focus:bg-white outline-none transition">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Jatuh Tempo</label>
+              <input type="date" id="in-tempo" onchange="updateInvoiceHeader()" class="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-brandPrimary focus:bg-white outline-none transition">
+            </div>
+          </div>
+
+          <!-- Input Nama Pengesah & Jabatan -->
+          <div class="grid grid-cols-2 gap-3 pt-1 border-t border-slate-100">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Nama Pengesah</label>
+              <input type="text" id="in-mgm-name" value="Admin PG Trans" oninput="updateInvoiceHeader()" class="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-brandPrimary focus:bg-white outline-none transition">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Jabatan / Role</label>
+              <input type="text" id="in-mgm-role" value="Management" oninput="updateInvoiceHeader()" class="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-brandPrimary focus:bg-white outline-none transition">
+            </div>
+          </div>
         </div>
 
-        <div class="security-notice">
-            <strong>⚠️ PENTING:</strong> Pembayaran hanya dianggap SAH jika ditransfer ke rekening resmi BCA di atas. Management tidak bertanggung jawab atas transaksi di luar nomor rekening ini.
+        <!-- Form Tambah Item -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/60 space-y-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-Black flex items-center gap-1.5">
+            <i class="fa-solid fa-plus-circle text-emerald-600"></i> Tambah Layanan / Armada
+          </h3>
+          
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Deskripsi Layanan</label>
+            <textarea id="add-desc" placeholder="Contoh: Innova Reborn (Blitar - Yogyakarta) Plat AG 1976 MC Inc. Driver & BBM" class="w-full bg-white border border-slate-200 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-brandPrimary" rows="2"></textarea>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Qty</label>
+              <input type="number" id="add-qty" value="1" min="1" class="w-full bg-white border border-slate-200 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-brandPrimary text-center font-semibold">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Hari</label>
+              <input type="number" id="add-day" value="3" min="1" class="w-full bg-white border border-slate-200 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-brandPrimary text-center font-semibold">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Harga (Rp)</label>
+              <input type="number" id="add-price" placeholder="0" class="w-full bg-white border border-slate-200 p-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-brandPrimary font-semibold">
+            </div>
+          </div>
+
+          <button type="button" onclick="addItem()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg transition flex items-center justify-center gap-2 shadow-sm shadow-emerald-600/20">
+            <i class="fa-solid fa-cart-plus"></i> Masukkan Ke Invoice
+          </button>
         </div>
-    </div>
 
-    <!-- Notes & Payment Details -->
-    <div class="notes-section">
-        <h4>Catatan & Ketentuan Layanan:</h4>
-        <p>1. Down Payment (DP) minimal 50% dari total biaya pemesanan kendaraan.</p>
-        <p>2. Harga belum termasuk biaya Toll, parkir, penginapan dan makan Driver. Kecuali sudah ada kesepakatan sebelumnya.</p>
-        <p>3. Harap melampirkan bukti transfer setelah melakukan pembayaran ke nomor WhatsApp 085174452300.</p>
-        <p>4. Sisa pembayaran dapat dititipkan ke Driver.</p>
-        <p>5. Terima kasih telah menggunakan layanan Ardn Holiday - Your Global Adventure!</p>
-    </div>
+        <!-- INPUT LAMPIRAN FOTO UNIT ARMADA -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/60 space-y-2">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-brandPrimary flex items-center gap-1.5">
+            <i class="fa-solid fa-camera text-brandOrange"></i> Lampiran Foto Unit Armada
+          </h3>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Pilih Foto Unit (Maks. 2 Foto)</label>
+            <input type="file" id="in-unit-photo" accept="image/*" multiple onchange="handleUnitPhotosUpload(this)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brandPrimary file:text-white hover:file:bg-[#a63300] cursor-pointer">
+          </div>
+        </div>
 
-    <!-- Area Tanda Tangan (Customer & Management) -->
-    <div class="signature-container">
-        <!-- TTD Customer / Penyewa (Sisi Kiri) -->
-        <div class="signature-box">
-            <p style="font-size: 13px; margin-bottom: 4px; visibility: hidden;">KOTA & TANGGAL</p>
-            <p style="font-weight: 600; font-size: 13px; margin: 0;">Penyewa / Customer,</p>
-            <p style="font-size: 11px; color: #64748B; margin-top: 2px;">Menyetujui Ketentuan</p>
+        <!-- Section Uang Muka (DP) -->
+        <div class="pt-2">
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Down Payment / DP (Rp)</label>
+          <input type="number" id="in-dp" value="3000000" oninput="renderItems()" class="w-full border border-slate-200 p-2.5 rounded-lg text-sm font-bold text-emerald-700 bg-emerald-50/30 focus:ring-2 focus:ring-emerald-500 outline-none">
+        </div>
+      </div>
 
-            <div class="signature-img-wrapper">
-                <input type="file" accept="image/*" class="signature-input" style="display:none;" onchange="previewSignatureImage(this)">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='75'><rect width='100%' height='100%' fill='%23F8FAFC'/><text x='50%' y='50%' fill='%2364748B' font-size='10' text-anchor='middle' dominant-baseline='middle'>+ Upload TTD Customer</text></svg>" 
-                     class="signature-img-preview" 
-                     onclick="this.previousElementSibling.click()" 
-                     title="Klik untuk upload TTD Customer">
+      <!-- PREVIEW INVOICE (Kanan) -->
+      <div class="lg:col-span-7 flex justify-center">
+        <div id="invoice-preview" class="relative bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-slate-200/80 w-full max-w-[780px] text-slate-800 flex flex-col justify-between print-shadow-none overflow-hidden" style="min-height: 900px;">
+          
+          <!-- Watermark Logo Multi-Halaman -->
+          <div class="invoice-watermark">
+            <img src="logo.png" alt="Watermark Logo" class="w-full h-auto object-contain" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'300\' viewBox=\'0 0 300 300\'><rect width=\'100%\' height=\'100%\' rx=\'30\' fill=\'%23C83E00\'/><text x=\'50%\' y=\'50%\' fill=\'white\' font-size=\'22\' font-weight=\'bold\' text-anchor=\'middle\' dominant-baseline=\'middle\' font-family=\'sans-serif\'>PG TOUR & TRAVEL</text></svg>';">
+          </div>
+
+          <div class="relative z-10">
+            <!-- Header Invoice -->
+            <div class="flex justify-between items-start border-b-2 border-slate-100 pb-5 mb-6">
+              <div>
+                <h2 class="text-2xl font-black text-brandPrimary tracking-tight">PG TOUR & TRAVEL</h2>
+                <p class="text-[11px] text-Black font-bold uppercase tracking-wider">The Best Choice</p>
+                <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Jl. Barito No. 51, Kota Blitar<br>
+                  <i class="fa-brands fa-whatsapp text-emerald-600"></i> 085335540888 | <i class="fa-regular fa-envelope text-slate-400"></i> info@pgtour.com
+                </p>
+              </div>
+              <div class="text-right">
+                <span class="text-3xl font-black tracking-tight text-brandOrange block">INVOICE</span>
+                <span id="out-no" class="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md inline-block mt-1">#PGT-20260801</span>
+              </div>
             </div>
 
-            <p style="font-weight: 700; font-size: 13px; margin: 0; text-decoration: underline;">
-                <span contenteditable="true" class="editable">( Budi Santoso )</span>
-            </p>
-            <p style="font-size: 12px; color: #64748B; margin-top: 2px;">
-                <span contenteditable="true" class="editable">Customer</span>
-            </p>
-        </div>
-
-        <!-- TTD Management / Ardn Holiday (Sisi Kanan) -->
-        <div class="signature-box">
-            <p style="font-size: 13px; margin-bottom: 4px;">
-                <span contenteditable="true" class="editable">Blitar</span>, 
-                <span contenteditable="true" class="editable">06 Agustus 2026</span>
-            </p>
-            <p style="font-weight: 600; font-size: 13px; margin: 0;">Hormat Kami,</p>
-            <p style="font-size: 11px; color: #64748B; margin-top: 2px;">Ardn Holiday</p>
-
-            <div class="signature-img-wrapper">
-                <input type="file" accept="image/*" class="signature-input" style="display:none;" onchange="previewSignatureImage(this)">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='75'><rect width='100%' height='100%' fill='%23F8FAFC'/><text x='50%' y='50%' fill='%2364748B' font-size='10' text-anchor='middle' dominant-baseline='middle'>+ Upload TTD / Stempel</text></svg>" 
-                     class="signature-img-preview" 
-                     onclick="this.previousElementSibling.click()" 
-                     title="Klik untuk upload gambar TTD / Stempel">
+            <!-- Meta Data Info -->
+            <div class="grid grid-cols-2 gap-4 mb-6 text-xs bg-slate-50/80 p-4 rounded-xl border border-slate-100">
+              <div>
+                <p class="text-slate-400 font-bold uppercase tracking-wider text-[10px] mb-1">DITAGIHKAN KEPADA:</p>
+                <p id="out-client" class="font-extrabold text-sm text-slate-800">Budi Santoso</p>
+                <p id="out-phone" class="text-slate-500 font-medium">081234567890</p>
+              </div>
+              <div class="text-right space-y-1">
+                <p><span class="text-slate-400">Tanggal Terbit:</span> <span id="out-tgl" class="font-bold text-slate-700">-</span></p>
+                <p><span class="text-slate-400">Jatuh Tempo:</span> <span id="out-tempo" class="font-bold text-slate-700">-</span></p>
+                <p><span class="text-slate-400">Ketentuan (Terms):</span> <span id="out-terms" class="font-bold text-Black">-</span></p>
+              </div>
             </div>
 
-            <p style="font-weight: 700; font-size: 13px; margin: 0; text-decoration: underline;">
-                <span contenteditable="true" class="editable">Ardiansyah Arif</span>
-            </p>
-            <p style="font-size: 12px; color: #64748B; margin-top: 2px;">
-                <span contenteditable="true" class="editable">Management</span>
-            </p>
+            <!-- TABEL DETAIL ITEM -->
+            <table class="w-full text-left text-xs mb-6 border-collapse">
+              <thead>
+                <tr class="bg-brandPrimary text-white uppercase text-[11px] tracking-wider">
+                  <th class="p-3 w-8 text-center rounded-l-lg">NO</th>
+                  <th class="p-3">DESKRIPSI LAYANAN / ARMADA</th>
+                  <th class="p-3 w-10 text-center">QTY</th>
+                  <th class="p-3 w-12 text-center">HARI</th>
+                  <th class="p-3 w-28 text-right">HARGA (RP)</th>
+                  <th class="p-3 w-28 text-right">TOTAL (RP)</th>
+                  <th class="p-3 w-8 text-center no-print rounded-r-lg"></th>
+                </tr>
+              </thead>
+              <tbody id="out-items-body" class="divide-y divide-slate-100">
+                <!-- Data item dimasukkan dinamis via JavaScript -->
+              </tbody>
+            </table>
+
+            <!-- Summary Table -->
+            <div class="flex justify-end mb-6">
+              <div class="w-full sm:w-1/2 text-xs space-y-2 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                <div class="flex justify-between text-slate-600">
+                  <span>Subtotal Total:</span>
+                  <span id="out-subtotal" class="font-bold text-slate-800">Rp 0</span>
+                </div>
+                <div class="flex justify-between text-emerald-600">
+                  <span>Down Payment (DP):</span>
+                  <span id="out-dp" class="font-bold">- Rp 0</span>
+                </div>
+                <div class="flex justify-between text-sm font-extrabold border-t border-slate-200 pt-2 text-Black">
+                  <span>SISA PELUNASAN:</span>
+                  <span id="out-sisa" class="text-Black">Rp 0</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rekening Resmi (Locked) -->
+            <div class="bg-slate-50 border border-slate-200/80 border-l-4 border-l-brandPrimary p-3.5 rounded-lg text-xs mb-6">
+              <div class="flex items-center justify-between font-bold text-brandPrimary mb-1.5 border-b border-dashed border-slate-200 pb-1">
+                <span>🔒 REKENING PEMBAYARAN RESMI</span>
+                <span class="text-[10px] bg-slate-200/70 text-slate-600 px-2 py-0.5 rounded font-semibold no-print">VERIFIED</span>
+              </div>
+              <div class="grid grid-cols-2 gap-x-4 text-[11px]">
+                <p><span class="text-slate-400">Bank:</span> <strong class="text-slate-800">Bank Central Asia</strong></p>
+                <p><span class="text-slate-400">No. Rekening:</span> <strong class="text-slate-800 tracking-wider">10901607094</strong></p>
+                <p class="col-span-2"><span class="text-slate-400">Atas Nama:</span> <strong class="text-slate-800">Muhammad Mambaur Roziqi</strong></p>
+              </div>
+              <div class="mt-2 text-[10px] text-rose-600 bg-rose-50 border border-rose-100 p-1.5 rounded leading-tight">
+                <strong>⚠️ PENTING:</strong> Pembayaran dianggap SAH hanya jika ditransfer ke rekening resmi di atas.
+              </div>
+            </div>
+
+            <!-- LAMPIRAN FOTO UNIT PREVIEW -->
+            <div id="unit-photos-wrapper" class="hidden mb-6 bg-slate-50/80 border border-slate-200/80 rounded-xl p-4">
+              <div class="flex items-center gap-2 font-bold text-brandPrimary uppercase tracking-wider border-b border-slate-200/60 pb-2 text-[11px] mb-3">
+                <i class="fa-solid fa-bus text-brandOrange"></i>
+                <span>Lampiran Foto Unit Armada</span>
+              </div>
+              <div id="unit-photos-grid" class="grid grid-cols-2 gap-3">
+                <!-- Foto unit dimasukkan di sini oleh JS -->
+              </div>
+            </div>
+
+            <!-- Catatan & Ketentuan Layanan (Terms & Conditions) -->
+            <div class="bg-slate-50/80 border border-slate-200/80 border-l-4 border-l-brandPrimary rounded-xl p-4 text-xs space-y-2.5 mb-6">
+              <div class="flex items-center gap-2 font-bold text-brandPrimary uppercase tracking-wider border-b border-slate-200/60 pb-2 text-[11px]">
+                <i class="fa-solid fa-file-contract text-brandOrange"></i>
+                <span>Catatan & Ketentuan Layanan (Terms & Conditions)</span>
+              </div>
+
+              <ol class="list-decimal list-inside space-y-1.5 text-slate-600 leading-relaxed text-[11px]">
+                <li><strong>Down Payment (DP):</strong> Pemesanan dianggap sah setelah melakukan pembayaran DP minimal <strong>50%</strong> dari total biaya.</li>
+                <li><strong>Pelunasan Tagihan:</strong> Pelunasan pembayaran dapat dilakukan maksimal <strong>H-1 keberangkatan</strong> atau dititipkan langsung kepada Driver sebelum perjalanan dimulai.</li>
+                <li><strong>Komponen Biaya:</strong> Harga sewa <strong>belum termasuk</strong> biaya Toll, Parkir, Tiket Wisata, Penyeberangan Kapal, Makan Driver, dan Penginapan Driver (khusus rute luar kota/menginap), kecuali sudah ada kesepakatan sebelumnya.</li>
+                <li><strong>Batas Durasi & Overtime:</strong> Penggunaan armada melebihi durasi sewa harian akan dikenakan biaya <i>overtime</i> sebesar <strong>10% / jam</strong> dari harga sewa harian.</li>
+                <li><strong>Kebijakan Pembatalan:</strong> Pembatalan sepihak oleh pemesan pada H-3 keberangkatan menyebabkan DP tidak dapat dikembalikan (<i>Non-Refundable</i>).</li>
+                <li><strong>Konfirmasi Pembayaran:</strong> Harap melampirkan bukti transfer resmi ke WhatsApp Admin <strong>085335540888</strong> agar transaksi terverifikasi di sistem.</li>
+                <li><strong>Barang Bawaan:</strong> Kehilangan atau kerusakan barang pribadi penumpang selama perjalanan berada di luar tanggung jawab pihak PG Tour & Travel.</li>
+              </ol>
+
+              <div class="pt-2 border-t border-slate-200/60 text-center font-bold text-brandPrimary text-[11px] tracking-wide">
+                Terima kasih telah memilih <span class="text-brandOrange">PG Tour & Travel</span> — <i>The Best Choice!</i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer & Tanda Tangan Ganda (Interactive Upload) -->
+          <div class="relative z-10 border-t border-slate-100 pt-4 text-xs">
+            <div class="flex justify-between items-start">
+              
+              <!-- TTD Customer (Sisi Kiri) -->
+              <div class="text-center w-44">
+                <p class="text-[11px] text-slate-500 mb-0.5 invisible">Lokasi, -</p>
+                <p class="text-[11px] font-semibold text-slate-700">Penyewa / Customer,</p>
+                <p class="text-[10px] text-slate-400 mb-1">Menyetujui Ketentuan</p>
+                
+                <!-- Area TTD Customer -->
+                <div class="h-14 flex items-center justify-center relative my-1">
+                  <input type="file" id="sig-cust-file" accept="image/*" class="hidden" onchange="previewSignature(this, 'sig-cust-img')">
+                  <img id="sig-cust-img" src="" class="max-h-14 max-w-full object-contain hidden">
+                  <button type="button" onclick="document.getElementById('sig-cust-file').click()" class="no-print text-[10px] text-slate-400 border border-dashed border-slate-300 rounded px-2.5 py-1 hover:border-brandPrimary hover:text-brandPrimary transition flex items-center gap-1">
+                    <i class="fa-solid fa-signature"></i> + TTD Customer
+                  </button>
+                </div>
+
+                <p id="out-sig-customer" class="font-bold text-slate-800 border-b border-slate-400 pb-0.5">( Budi Santoso )</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Customer</p>
+              </div>
+
+              <!-- TTD Management (Sisi Kanan) -->
+              <div class="text-center w-44">
+                <p class="text-[11px] text-slate-500 mb-0.5"><span id="out-tgl-ttd">-</span></p>
+                <p class="text-[11px] font-semibold text-slate-700">Hormat Kami,</p>
+                <p class="text-[10px] text-slate-400 mb-1">PG Tour & Travel</p>
+                
+                <!-- Area TTD Management -->
+                <div class="h-14 flex items-center justify-center relative my-1">
+                  <input type="file" id="sig-mgm-file" accept="image/*" class="hidden" onchange="previewSignature(this, 'sig-mgm-img')">
+                  <img id="sig-mgm-img" src="" class="max-h-14 max-w-full object-contain hidden">
+                  <button type="button" onclick="document.getElementById('sig-mgm-file').click()" class="no-print text-[10px] text-slate-400 border border-dashed border-slate-300 rounded px-2.5 py-1 hover:border-brandPrimary hover:text-brandPrimary transition flex items-center gap-1">
+                    <i class="fa-solid fa-file-signature"></i> + TTD / Stempel
+                  </button>
+                </div>
+
+                <p id="out-sig-mgm" class="font-bold text-slate-800 border-b border-slate-400 pb-0.5">( Admin PG Trans )</p>
+                <p id="out-role-mgm" class="text-[10px] text-slate-400 mt-0.5">Management</p>
+              </div>
+
+            </div>
+          </div>
+
         </div>
+      </div>
+
     </div>
-</div>
+  </div>
 
-<div class="action-bar">
-    <button class="btn" onclick="window.print()">🖨️ Cetak / Simpan sebagai PDF</button>
-</div>
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    let items = [
+      { desc: "Innova Reborn (Blitar - Yogyakarta)\nPlat: AG 1976 MC | Driver: Mas Naja", qty: 1, day: 3, price: 1500000 },
+      { desc: "Biaya Tol & Parkir Kawasan Wisata", qty: 1, day: 1, price: 700000 }
+    ];
 
-<script>
-function previewSignatureImage(input) {
-    if (input.files && input.files[0]) {
-        let reader = new FileReader();
-        reader.onload = function (e) {
-            let imgPreview = input.nextElementSibling;
-            if (imgPreview) {
-                imgPreview.src = e.target.result;
-            }
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
+    // Array Penyimpan Offset Posisi Vertikal Foto Unit (Default: 50% / Tengah)
+    let unitPhotoOffsets = [50, 50];
 
-document.addEventListener("DOMContentLoaded", function () {
-    const logoContainer = document.getElementById('logoContainer');
-    const logoInput = document.getElementById('logoInput');
-    const logoImg = document.getElementById('logoImg');
-
-    if (logoContainer && logoInput && logoImg) {
-        const savedLogo = localStorage.getItem('ardn_custom_logo');
-        if (savedLogo) logoImg.src = savedLogo;
-
-        logoImg.addEventListener('click', () => logoInput.click());
-        logoInput.addEventListener('change', (e) => prosesFileGambar(e.target.files[0]));
-
-        logoContainer.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            logoContainer.classList.add('dragover');
-        });
-        logoContainer.addEventListener('dragleave', () => logoContainer.classList.remove('dragover'));
-        logoContainer.addEventListener('drop', (e) => {
-            e.preventDefault();
-            logoContainer.classList.remove('dragover');
-            prosesFileGambar(e.dataTransfer.files[0]);
-        });
+    // Format Tanggal DD/MM/YYYY
+    function formatDateDDMMYYYY(dateStr) {
+      if (!dateStr) return '-';
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
     }
 
-    function prosesFileGambar(file) {
-        if (file && file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const result = e.target.result;
-                logoImg.src = result;
-                localStorage.setItem('ardn_custom_logo', result);
-            };
-            reader.readAsDataURL(file);
+    // Preview Gambar TTD / Stempel
+    function previewSignature(input, targetImgId) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.getElementById(targetImgId);
+          img.src = e.target.result;
+          img.classList.remove('hidden');
+          
+          if (input.nextElementSibling) {
+            input.nextElementSibling.classList.add('hidden');
+          }
         }
-    }
-});
-
-function previewUnitImage(input) {
-    if (input.files && input.files[0]) {
-        let reader = new FileReader();
-        reader.onload = function (e) {
-            let imgPreview = input.nextElementSibling;
-            if (imgPreview) {
-                imgPreview.src = e.target.result;
-            }
-        };
         reader.readAsDataURL(input.files[0]);
+      }
     }
-}
 
-function autoResizeTextarea(el) {
-    el.style.height = 'auto';
-    el.style.height = el.scrollHeight + 'px';
-}
+    // Handler Upload & Preview Foto Unit Armada (Dengan Fitur Up & Down Position)
+    function handleUnitPhotosUpload(input) {
+      const wrapper = document.getElementById('unit-photos-wrapper');
+      const grid = document.getElementById('unit-photos-grid');
+      grid.innerHTML = '';
 
-window.addEventListener('beforeprint', function() {
-    document.querySelectorAll('textarea.desc-input').forEach(function(textarea) {
-        autoResizeTextarea(textarea);
-    });
-});
+      if (input.files && input.files.length > 0) {
+        wrapper.classList.remove('hidden');
+        const files = Array.from(input.files).slice(0, 2); // Batasi maks 2 foto
 
-function addRow() {
-    let tbody = document.getElementById('itemBody');
-    if (!tbody) return;
+        files.forEach((file, index) => {
+          unitPhotoOffsets[index] = 50; // Reset ke posisi tengah (50%)
 
-    let newRow = document.createElement('tr');
-    newRow.innerHTML = `
-        <td class="text-center row-number"></td>
-        <td class="text-center">
-            <div class="unit-img-wrapper">
-                <input type="file" accept="image/*" class="unit-img-input" style="display:none;" onchange="previewUnitImage(this)">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='75' height='55'><rect width='100%' height='100%' fill='%23F1F5F9'/><text x='50%' y='50%' fill='%2364748B' font-size='10' text-anchor='middle' dominant-baseline='middle'>+ Upload Foto</text></svg>" 
-                     class="unit-img-preview" 
-                     onclick="this.previousElementSibling.click()" 
-                     title="Klik untuk upload foto unit">
-            </div>
-        </td>
-        <td>
-            <textarea class="desc-input" oninput="autoResizeTextarea(this)" placeholder="Tulis deskripsi bebas di sini..."></textarea>
-        </td>
-        <td class="text-center"><input type="number" value="1" class="qty" oninput="calculateTotal()" style="text-align: center;"></td>
-        <td class="text-center"><input type="number" value="1" class="days" oninput="calculateTotal()" style="text-align: center;"></td>
-        <td class="text-right"><input type="text" value="0" class="price" oninput="calculateTotal()" style="text-align: right;"></td>
-        <td class="text-right row-total" style="font-weight: 600;">0</td>
-        <td class="text-center no-print">
-            <button type="button" onclick="deleteRow(this)" style="background: #EF4444; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer;">✕</button>
-        </td>
-    `;
-    
-    tbody.appendChild(newRow);
-    renumberRows();
-    calculateTotal();
-}
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const container = document.createElement('div');
+            container.className = 'relative group rounded-lg overflow-hidden border border-slate-200 shadow-sm';
 
-function deleteRow(button) {
-    let rows = document.querySelectorAll('#itemBody tr');
-    if (rows.length > 1) {
-        button.closest('tr').remove();
-        renumberRows();
-        calculateTotal();
-    } else {
-        alert("Minimal harus ada 1 baris item dalam invoice!");
+            container.innerHTML = `
+              <img id="unit-img-${index}" src="${e.target.result}" class="w-full h-36 object-cover rounded-lg transition-all duration-200" style="object-position: center 50%;">
+              
+              <!-- TAMPILAN KONTROL ATAS & BAWAH (NO-PRINT) -->
+              <div class="no-print absolute top-1.5 right-1.5 bg-slate-900/80 backdrop-blur-sm rounded-lg p-1 flex flex-col gap-1 shadow-md">
+                <button type="button" onclick="adjustPhotoPosition(${index}, -10)" title="Geser Tampilan ke Atas" class="text-white hover:text-brandOrange text-xs font-bold w-6 h-6 flex items-center justify-center bg-slate-800 hover:bg-slate-700 rounded transition">
+                  <i class="fa-solid fa-chevron-up"></i>
+                </button>
+                <button type="button" onclick="adjustPhotoPosition(${index}, 10)" title="Geser Tampilan ke Bawah" class="text-white hover:text-brandOrange text-xs font-bold w-6 h-6 flex items-center justify-center bg-slate-800 hover:bg-slate-700 rounded transition">
+                  <i class="fa-solid fa-chevron-down"></i>
+                </button>
+              </div>
+            `;
+            grid.appendChild(container);
+          }
+          reader.readAsDataURL(file);
+        });
+      } else {
+        wrapper.classList.add('hidden');
+      }
     }
-}
 
-function renumberRows() {
-    let rows = document.querySelectorAll('#itemBody tr');
-    rows.forEach((row, index) => {
-        let numCell = row.querySelector('.row-number');
-        if (numCell) numCell.innerText = index + 1;
-    });
-}
+    // Fungsi Penggeser Posisi Vertikal Foto
+    function adjustPhotoPosition(index, step) {
+      if (unitPhotoOffsets[index] === undefined) unitPhotoOffsets[index] = 50;
+      
+      // Clamp persentase antara 0% (paling atas) dan 100% (paling bawah)
+      unitPhotoOffsets[index] = Math.max(0, Math.min(100, unitPhotoOffsets[index] + step));
+      
+      const img = document.getElementById(`unit-img-${index}`);
+      if (img) {
+        img.style.objectPosition = `center ${unitPhotoOffsets[index]}%`;
+      }
+    }
 
-function calculateTotal() {
-    let grandTotal = 0;
-    let rows = document.querySelectorAll('#itemBody tr');
+    function addItem() {
+      const descInput = document.getElementById('add-desc');
+      const qtyInput = document.getElementById('add-qty');
+      const dayInput = document.getElementById('add-day');
+      const priceInput = document.getElementById('add-price');
 
-    rows.forEach(function(row) {
-        let qtyInput = row.querySelector('.qty');
-        let daysInput = row.querySelector('.days');
-        let priceInput = row.querySelector('.price');
+      const desc = descInput.value.trim();
+      const qty = parseFloat(qtyInput.value) || 1;
+      const day = parseFloat(dayInput.value) || 1;
+      const price = parseFloat(priceInput.value) || 0;
 
-        let qty = qtyInput ? (parseFloat(qtyInput.value) || 0) : 0;
-        let days = daysInput ? (parseFloat(daysInput.value) || 0) : 0;
-        let priceStr = priceInput ? priceInput.value.replace(/[^0-9]/g, '') : '0';
-        let price = parseFloat(priceStr) || 0;
+      if (!desc) {
+        alert("Harap isi deskripsi layanan terlebih dahulu!");
+        return;
+      }
 
-        let rowTotal = qty * days * price;
-        grandTotal += rowTotal;
+      items.push({ desc, qty, day, price });
 
-        let rowTotalCell = row.querySelector('.row-total');
-        if (rowTotalCell) rowTotalCell.innerText = rowTotal.toLocaleString('id-ID');
-    });
+      descInput.value = '';
+      qtyInput.value = '1';
+      dayInput.value = '1';
+      priceInput.value = '';
 
-    let grandTotalEl = document.getElementById('grandTotal');
-    if (grandTotalEl) grandTotalEl.innerText = 'Rp ' + grandTotal.toLocaleString('id-ID');
+      renderItems();
+    }
+
+    function removeItem(index) {
+      items.splice(index, 1);
+      renderItems();
+    }
+
+    function renderItems() {
+      const formatRupiah = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
+
+      const tbody = document.getElementById('out-items-body');
+      tbody.innerHTML = '';
+
+      let subtotal = 0;
+
+      items.forEach((item, index) => {
+        const totalItem = item.qty * item.day * item.price;
+        subtotal += totalItem;
+
+        const formattedDesc = item.desc.replace(/\n/g, '<br>');
+
+        const tr = `
+          <tr class="hover:bg-slate-50/50 transition">
+            <td class="p-3 text-center text-slate-400 font-medium">${index + 1}</td>
+            <td class="p-3 font-medium text-slate-800 leading-relaxed">${formattedDesc}</td>
+            <td class="p-3 text-center font-medium">${item.qty}</td>
+            <td class="p-3 text-center font-medium">${item.day}</td>
+            <td class="p-3 text-right font-medium">${formatRupiah(item.price)}</td>
+            <td class="p-3 text-right font-bold text-slate-900">${formatRupiah(totalItem)}</td>
+            <td class="p-3 text-center no-print">
+              <button onclick="removeItem(${index})" title="Hapus Item" class="text-rose-400 hover:text-rose-600 font-bold px-2 py-1 rounded hover:bg-rose-50 transition">
+                ✕
+              </button>
+            </td>
+          </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', tr);
+      });
+
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic">Belum ada item layanan ditambahkan.</td></tr>`;
+      }
+
+      const dp = parseFloat(document.getElementById('in-dp').value) || 0;
+      const sisa = subtotal - dp;
+
+      document.getElementById('out-subtotal').innerText = formatRupiah(subtotal);
+      document.getElementById('out-dp').innerText = '- ' + formatRupiah(dp);
+      document.getElementById('out-sisa').innerText = formatRupiah(sisa >= 0 ? sisa : 0);
+    }
+
+    function updateInvoiceHeader() {
+      document.getElementById('out-no').innerText = '#' + document.getElementById('in-no').value;
+      
+      const tglFormatted = formatDateDDMMYYYY(document.getElementById('in-tgl').value);
+      document.getElementById('out-tgl').innerText = tglFormatted;
+      document.getElementById('out-tgl-ttd').innerText = tglFormatted;
+      document.getElementById('out-tempo').innerText = formatDateDDMMYYYY(document.getElementById('in-tempo').value);
+      
+      document.getElementById('out-client').innerText = document.getElementById('in-client').value;
+      document.getElementById('out-phone').innerText = document.getElementById('in-phone').value;
+      document.getElementById('out-terms').innerText = document.getElementById('in-terms').value;
+      document.getElementById('out-sig-customer').innerText = `( ${document.getElementById('in-client').value} )`;
+
+      // Update Nama Pengesah & Jabatan Management
+      const mgmName = document.getElementById('in-mgm-name').value.trim();
+      const mgmRole = document.getElementById('in-mgm-role').value.trim();
+      document.getElementById('out-sig-mgm').innerText = `( ${mgmName ? mgmName : 'Admin PG Trans'} )`;
+      document.getElementById('out-role-mgm').innerText = mgmRole ? mgmRole : 'Management';
+    }
+
+    // Set Default Date to Today & Due Date to +4 Days
+    const today = new Date();
+    const dueDate = new Date();
+    dueDate.setDate(today.getDate() + 4);
+
+    document.getElementById('in-tgl').valueAsDate = today;
+    document.getElementById('in-tempo').valueAsDate = dueDate;
+
+    updateInvoiceHeader();
+    renderItems();
     
-    hitungSummary();
+    // Ganti GANTI_DENGAN_BIN_ID_ANDA dengan ID dari JSONBin Langkah 1
+const STATUS_API_URL = "https://api.jsonbin.io/v3/b/6a973342da38895dfe2c9444/latest"; 
+
+async function checkSubscriptionStatus() {
+  try {
+    const response = await fetch(STATUS_API_URL);
+    const data = await response.json();
+    
+    // Jika nilai "active" di JSONBin diubah menjadi false, kunci aplikasi
+    if (data.record.active === true) {
+      document.getElementById('expired-screen').classList.remove('hidden');
+    }
+  } catch (error) {
+    console.error("Gagal memverifikasi status lisensi:", error);
+  }
 }
 
-function hitungSummary() {
-    let grandTotalEl = document.getElementById('grandTotal');
-    let diskonInputEl = document.getElementById('diskonInput');
-    let dpInputEl = document.getElementById('dpInput');
-    let sisaPelunasanEl = document.getElementById('sisaPelunasan');
-
-    if (!grandTotalEl || !sisaPelunasanEl) return;
-
-    let totalText = grandTotalEl.innerText;
-    let grandTotal = parseInt(totalText.replace(/[^0-9]/g, '')) || 0;
-
-    let diskonText = diskonInputEl ? diskonInputEl.innerText : '0';
-    let diskonValue = parseInt(diskonText.replace(/[^0-9]/g, '')) || 0;
-
-    let dpText = dpInputEl ? dpInputEl.innerText : '0';
-    let dpValue = parseInt(dpText.replace(/[^0-9]/g, '')) || 0;
-
-    let totalSetelahDiskon = grandTotal - diskonValue;
-    if (totalSetelahDiskon < 0) totalSetelahDiskon = 0;
-
-    let sisa = totalSetelahDiskon - dpValue;
-    if (sisa < 0) sisa = 0;
-
-    sisaPelunasanEl.innerText = "Rp " + sisa.toLocaleString('id-ID');
-}
-</script>
-
+checkSubscriptionStatus();
+  </script>
 </body>
 </html>

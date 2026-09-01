@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice - Ardn Holiday</title>
+    <style>
+        :root {
+            --primary-color: #1B365D;
+            --accent-color: #FF9900;
+            --bg-color: #F8FAFC;
+            --text-color: #334155;
+            --border-color: #CBD5E1;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #E2E8F0;
+            color: var(--text-color);
+            padding: 30px;
+        }
+        .invoice-container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: #FFFFFF;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden; /* Mengunci watermark agar tidak meluber */
+        }
+
+        /* --- WATERMARK BACKGROUND --- */
+        .invoice-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--primary-color);
+            opacity: 0.04;
+            white-space: nowrap;
+            pointer-events: none;
+            user-select: none;
+            z-index: 0;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #E2E8F0;
+            padding-bottom: 25px;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+        }
+        .company-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .company-logo img {
+            width: 85px;
+            height: 85px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px dashed #CBD5E1;
+            transition: all 0.2s ease-in-out;
+        }
+        .company-logo img:hover {
+            opacity: 0.85;
+            transform: scale(1.03);
+            border-color: var(--primary-color);
+        }
+        .company-logo.dragover img {
+            border-color: var(--primary-color);
+            background-color: #E2E8F0;
+            opacity: 0.7;
+        }
+        .company-title h1 {
+            font-size: 24px;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        .company-title p {
+            font-size: 13px;
+            color: #64748B;
+        }
+        .company-info {
+            text-align: right;
+        }
+        .company-info h2 {
+            font-size: 20px;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        .company-info p {
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.5;
+        }
+        
+        .invoice-details-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 1;
+        }
+        .customer-section {
+            text-align: left;
+        }
+        .invoice-meta {
+            text-align: right;
+        }
+        .customer-section h3, .invoice-meta h3 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+        .customer-section p, .invoice-meta p {
+            margin: 4px 0;
+            padding: 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .editable {
+            border: 1px dashed transparent;
+            padding: 2px 5px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .editable:hover {
+            border-color: var(--accent-color);
+            background: #FFFBEB;
+            cursor: pointer;
+        }
+        .editable:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: #FFFFFF;
+            box-shadow: 0 0 0 2px rgba(27, 54, 93, 0.2);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 1;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+        th {
+            background-color: var(--primary-color);
+            color: #FFFFFF;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+        td input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-family: inherit;
+            color: inherit;
+        }
+        td input:focus {
+            outline: none;
+        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        
+        .unit-img-preview {
+            width: 75px;
+            height: 55px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px dashed #CBD5E1;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: #F8FAFC;
+        }
+        .unit-img-preview:hover {
+            border-color: var(--primary-color);
+            transform: scale(1.03);
+        }
+        td textarea.desc-input {
+            width: 100%;
+            border: 1px solid transparent;
+            background: transparent;
+            font-size: 13px;
+            font-family: inherit;
+            color: inherit;
+            resize: none;
+            min-height: 45px;
+            padding: 4px;
+            border-radius: 4px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        td textarea.desc-input:hover, td textarea.desc-input:focus {
+            border-color: #CBD5E1;
+            background: #FFFBEB;
+            outline: none;
+        }
+
+        .summary-table {
+            width: 320px;
+            margin-left: auto;
+            margin-bottom: 30px;
+            border-collapse: collapse;
+            position: relative;
+            z-index: 1;
+        }
+        .summary-table td {
+            text-align: center !important;
+            padding: 8px 12px;
+        }
+
+        /* --- REKENING PEMBAYARAN RESMI (LOCKED) --- */
+        .payment-info-box {
+            position: relative;
+            z-index: 1;
+            background-color: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 25px;
+        }
+        .payment-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px dashed #CBD5E1;
+        }
+        .payment-title {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--primary-color);
+        }
+        .badge-locked {
+            font-size: 10px;
+            background-color: #E2E8F0;
+            color: #475569;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .bank-details-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 4px 12px;
+            font-size: 12px;
+        }
+        .bank-label { color: #64748B; }
+        .bank-value { font-weight: 600; color: #0F172A; }
+        .security-notice {
+            margin-top: 8px;
+            font-size: 11px;
+            color: #DC2626;
+            line-height: 1.4;
+            background-color: #FEF2F2;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid #FECACA;
+        }
+
+        .notes-section {
+            position: relative;
+            z-index: 1;
+            background: #F8FAFC;
+            border-left: 4px solid var(--primary-color);
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 30px;
+        }
+        .notes-section h4 {
+            font-size: 13px;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .notes-section p {
+            font-size: 12px;
+            color: #64748B;
+            line-height: 1.6;
+        }
+
+        .signature-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 35px;
+            page-break-inside: avoid;
+        }
+        .signature-box {
+            text-align: center;
+            min-width: 200px;
+        }
+        .signature-img-preview {
+            width: 160px;
+            height: 75px;
+            object-fit: contain;
+            cursor: pointer;
+            border: 1px dashed #CBD5E1;
+            border-radius: 4px;
+            margin: 8px 0;
+            transition: all 0.2s;
+            background-color: #F8FAFC;
+        }
+        .signature-img-preview:hover {
+            border-color: var(--primary-color);
+        }
+
+        .action-bar {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background-color: #11223F;
+        }
+
+        /* --- KHUSUS CETAK / PRINT --- */
+        @media print {
+            @page {
+                margin: 0;
+            }
+            body {
+                background: white;
+                padding: 15mm;
+            }
+            .no-print, .action-bar {
+                display: none !important;
+            }
+            .invoice-container {
+                box-shadow: none;
+                padding: 0;
+            }
+            .editable {
+                border: none !important;
+                background: transparent !important;
+            }
+            .invoice-watermark {
+                opacity: 0.05 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .company-logo img {
+                border: none !important;
+                box-shadow: none !important;
+            }
+            th {
+                color: var(--primary-color) !important;
+                background-color: #F1F5F9 !important;
+                border: 1px solid var(--border-color) !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .unit-img-preview, .signature-img-preview {
+                border: none !important;
+                background: transparent !important;
+            }
+            td textarea.desc-input {
+                border: none !important;
+                background: transparent !important;
+                resize: none !important;
+                overflow: hidden !important;
+                height: auto !important;
+            }
+            .payment-info-box {
+                background-color: #F8FAFC !important;
+                border: 1px solid #CBD5E1 !important;
+                border-left: 4px solid var(--primary-color) !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .security-notice {
+                background-color: #FEF2F2 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .badge-locked {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="invoice-container">
+    <!-- Watermark Background -->
+    <div class="invoice-watermark">OFFICIAL INVOICE • ARDN HOLIDAY</div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="company-logo" id="logoContainer">
+            <input type="file" id="logoInput" accept="image/*" style="display: none;">
+            <img id="logoImg" 
+                 src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='85' height='85'><rect width='100%' height='100%' fill='%231B365D'/><text x='50%' y='50%' fill='white' font-size='11' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'>Upload Logo</text></svg>" 
+                 alt="Ardn Holiday Logo" 
+                 title="Klik atau drag gambar ke sini untuk mengganti logo">
+            
+            <div class="company-title">
+                <h1>Ardn Holiday</h1>
+                <p>Your Global Adventure</p>
+            </div>
+        </div>
+
+        <div class="company-info">
+            <h2>Ardn Holiday</h2>
+            <p>HP / Whatsapp : <span contenteditable="true" class="editable">085174452300</span></p>
+            <p>Email : <span contenteditable="true" class="editable">unvxsible@gmail.com</span></p>
+            <p>Alamat : Jl. Sungai Hulu Timur No. 4<br>Kepanjenkidul, East Java, Indonesia, 66117</p>
+        </div>
+    </div>
+
+    <!-- Invoice Title & Customer Info -->
+    <div class="invoice-details-box">
+        <div class="customer-section">
+            <h3>Kepada :</h3>
+            <p><strong>Nama Customer :</strong> <span contenteditable="true" class="editable" style="font-weight:600;">Budi Santoso</span></p>
+            <p><strong>Nomor HP :</strong> <span contenteditable="true" class="editable">081234567890</span></p>
+            <p><strong>Alamat :</strong> <span contenteditable="true" class="editable">Jl. Mahakam No. 5 Kota Blitar</span></p>
+        </div>
+        <div class="invoice-meta">
+            <h3>Detail Invoice</h3>
+            <p><strong>No. Invoice :</strong> <span contenteditable="true" class="editable" style="font-weight:600;">AH-20260801</span></p>
+            <p><strong>Tanggal :</strong> <span contenteditable="true" class="editable">06 Agustus 2026</span></p>
+            <p><strong>Jatuh Tempo :</strong> <span contenteditable="true" class="editable">10 Agustus 2026</span></p>
+            <p><strong>Terms :</strong> <span contenteditable="true" class="editable">DP 50% & Pelunasan H-1</span></p>
+        </div>
+    </div>
+
+    <!-- Item Table -->
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 4%;">No</th>
+                <th style="width: 12%; text-align: center;">Lampiran Foto</th>
+                <th>Deskripsi / Rincian Layanan</th>
+                <th style="width: 8%; text-align: center;">Qty</th>
+                <th style="width: 8%; text-align: center;">Hari</th>
+                <th style="width: 16%; text-align: right;">Harga Satuan (Rp)</th>
+                <th style="width: 16%; text-align: right;">Total (Rp)</th>
+                <th style="width: 5%; text-align: center;" class="no-print">Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="itemBody">
+            <tr>
+                <td class="text-center row-number">1</td>
+                <td class="text-center">
+                    <div class="unit-img-wrapper">
+                        <input type="file" accept="image/*" class="unit-img-input" style="display:none;" onchange="previewUnitImage(this)">
+                        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='75' height='55'><rect width='100%' height='100%' fill='%23F1F5F9'/><text x='50%' y='50%' fill='%2364748B' font-size='10' text-anchor='middle' dominant-baseline='middle'>+ Upload Foto</text></svg>" 
+                             class="unit-img-preview" 
+                             onclick="this.previousElementSibling.click()" 
+                             title="Klik untuk upload foto unit">
+                    </div>
+                </td>
+                <td>
+                    <textarea class="desc-input" oninput="autoResizeTextarea(this)" placeholder="Tulis deskripsi bebas di sini..."></textarea>
+                </td>
+                <td class="text-center"><input type="number" value="1" class="qty" oninput="calculateTotal()" style="text-align: center;"></td>
+                <td class="text-center"><input type="number" value="3" class="days" oninput="calculateTotal()" style="text-align: center;"></td>
+                <td class="text-right"><input type="text" value="350.000" class="price" oninput="calculateTotal()" style="text-align: right;"></td>
+                <td class="text-right row-total" style="font-weight: 600;">1.050.000</td>
+                <td class="text-center no-print">
+                    <button type="button" onclick="deleteRow(this)" style="background: #EF4444; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer;">✕</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="margin-bottom: 25px;" class="no-print">
+        <button type="button" onclick="addRow()" class="btn" style="padding: 8px 16px; font-size: 13px; background-color: #10B981;">+ Tambah Baris</button>
+    </div>
+
+    <!-- Summary Table -->
+    <table class="summary-table">
+        <tr>
+            <td style="font-weight: 600;">Total Harga:</td>
+            <td id="grandTotal" style="font-weight: 600;">Rp 1.050.000</td>
+        </tr>
+        <tr>
+            <td style="font-weight: 600;">Diskon:</td>
+            <td>
+                <span contenteditable="true" class="editable" id="diskonInput" oninput="hitungSummary()" style="font-weight:600;">Rp 0</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="font-weight: 600;">Down Payment (DP):</td>
+            <td>
+                <span contenteditable="true" class="editable" id="dpInput" oninput="hitungSummary()" style="font-weight:600;">Rp 525.000</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="font-weight: 600; background: #F1F5F9;">Sisa Pelunasan:</td>
+            <td id="sisaPelunasan" style="font-weight: 700; background: #F1F5F9; color: var(--primary-color);">Rp 525.000</td>
+        </tr>
+    </table>
+
+    <!-- Rekening Pembayaran Resmi (Non-Editable) -->
+    <div class="payment-info-box">
+        <div class="payment-header">
+            <span class="payment-title">🔒 REKENING PEMBAYARAN RESMI</span>
+            <span class="badge-locked">OFFICIAL ACCOUNT</span>
+        </div>
+        
+        <div class="bank-details-grid">
+            <span class="bank-label">Nama Bank:</span>
+            <span class="bank-value">Bank Central Asia (BCA)</span>
+
+            <span class="bank-label">No. Rekening:</span>
+            <span class="bank-value" style="letter-spacing: 0.5px;">3310650128</span>
+
+            <span class="bank-label">Atas Nama:</span>
+            <span class="bank-value">Ardiansyah Arif Faizin</span>
+        </div>
+
+        <div class="security-notice">
+            <strong>⚠️ PENTING:</strong> Pembayaran hanya dianggap SAH jika ditransfer ke rekening resmi BCA di atas. Management tidak bertanggung jawab atas transaksi di luar nomor rekening ini.
+        </div>
+    </div>
+
+    <!-- Notes & Payment Details -->
+    <div class="notes-section">
+        <h4>Catatan & Ketentuan Layanan:</h4>
+        <p>1. Down Payment (DP) minimal 50% dari total biaya pemesanan kendaraan.</p>
+        <p>2. Harga belum termasuk biaya Toll, parkir, penginapan dan makan Driver. Kecuali sudah ada kesepakatan sebelumnya.</p>
+        <p>3. Harap melampirkan bukti transfer setelah melakukan pembayaran ke nomor WhatsApp 085174452300.</p>
+        <p>4. Sisa pembayaran dapat dititipkan ke Driver.</p>
+        <p>5. Terima kasih telah menggunakan layanan Ardn Holiday - Your Global Adventure!</p>
+    </div>
+
+    <!-- Area Tanda Tangan (Customer & Management) -->
+    <div class="signature-container">
+        <!-- TTD Customer / Penyewa (Sisi Kiri) -->
+        <div class="signature-box">
+            <p style="font-size: 13px; margin-bottom: 4px; visibility: hidden;">KOTA & TANGGAL</p>
+            <p style="font-weight: 600; font-size: 13px; margin: 0;">Penyewa / Customer,</p>
+            <p style="font-size: 11px; color: #64748B; margin-top: 2px;">Menyetujui Ketentuan</p>
+
+            <div class="signature-img-wrapper">
+                <input type="file" accept="image/*" class="signature-input" style="display:none;" onchange="previewSignatureImage(this)">
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='75'><rect width='100%' height='100%' fill='%23F8FAFC'/><text x='50%' y='50%' fill='%2364748B' font-size='10' text-anchor='middle' dominant-baseline='middle'>+ Upload TTD Customer</text></svg>" 
+                     class="signature-img-preview" 
+                     onclick="this.previousElementSibling.click()" 
+                     title="Klik untuk upload TTD Customer">
+            </div>
+
+            <p style="font-weight: 700; font-size: 13px; margin: 0; text-decoration: underline;">
+                <span contenteditable="true" class="editable">( Budi Santoso )</span>
+            </p>
+            <p style="font-size: 12px; color: #64748B; margin-top: 2px;">
+                <span contenteditable="true" class="editable">Customer</span>
+            </p>
+        </div>
+
+        <!-- TTD Management / Ardn Holiday (Sisi Kanan) -->
+        <div class="signature-box">
+            <p style="font-size: 13px; margin-bottom: 4px;">
+                <span contenteditable="true" class="editable">Blitar</span>, 
+                <span contenteditable="true" class="editable">06 Agustus 2026</span>
+            </p>
+            <p style="font-weight: 600; font-size: 13px; margin: 0;">Hormat Kami,</p>
+            <p style="font-size: 11px; color: #64748B; margin-top: 2px;">Ardn Holiday</p>
+
+            <div class="signature-img-wrapper">
+                <input type="file" accept="image/*" class="signature-input" style="display:none;" onchange="previewSignatureImage(this)">
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='75'><rect width='100%' height='100%' fill='%23F8FAFC'/><text x='50%' y='50%' fill='%2364748B' font-size='10' text-anchor='middle' dominant-baseline='middle'>+ Upload TTD / Stempel</text></svg>" 
+                     class="signature-img-preview" 
+                     onclick="this.previousElementSibling.click()" 
+                     title="Klik untuk upload gambar TTD / Stempel">
+            </div>
+
+            <p style="font-weight: 700; font-size: 13px; margin: 0; text-decoration: underline;">
+                <span contenteditable="true" class="editable">Ardiansyah Arif</span>
+            </p>
+            <p style="font-size: 12px; color: #64748B; margin-top: 2px;">
+                <span contenteditable="true" class="editable">Management</span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="action-bar">
+    <button class="btn" onclick="window.print()">🖨️ Cetak / Simpan sebagai PDF</button>
+</div>
+
+<script>
+function previewSignatureImage(input) {
+    if (input.files && input.files[0]) {
+        let reader = new FileReader();
+        reader.onload = function (e) {
+            let imgPreview = input.nextElementSibling;
+            if (imgPreview) {
+                imgPreview.src = e.target.result;
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const logoContainer = document.getElementById('logoContainer');
+    const logoInput = document.getElementById('logoInput');
+    const logoImg = document.getElementById('logoImg');
+
+    if (logoContainer && logoInput && logoImg) {
+        const savedLogo = localStorage.getItem('ardn_custom_logo');
+        if (savedLogo) logoImg.src = savedLogo;
+
+        logoImg.addEventListener('click', () => logoInput.click());
+        logoInput.addEventListener('change', (e) => prosesFileGambar(e.target.files[0]));
+
+        logoContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            logoContainer.classList.add('dragover');
+        });
+        logoContainer.addEventListener('dragleave', () => logoContainer.classList.remove('dragover'));
+        logoContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            logoContainer.classList.remove('dragover');
+            prosesFileGambar(e.dataTransfer.files[0]);
+        });
+    }
+
+    function prosesFileGambar(file) {
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const result = e.target.result;
+                logoImg.src = result;
+                localStorage.setItem('ardn_custom_logo', result);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+});
+
+function previewUnitImage(input) {
+    if (input.files && input.files[0]) {
+        let reader = new FileReader();
+        reader.onload = function (e) {
+            let imgPreview = input.nextElementSibling;
+            if (imgPreview) {
+                imgPreview.src = e.target.result;
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function autoResizeTextarea(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+}
+
+window.addEventListener('beforeprint', function() {
+    document.querySelectorAll('textarea.desc-input').forEach(function(textarea) {
+        autoResizeTextarea(textarea);
+    });
+});
+
+function addRow() {
+    let tbody = document.getElementById('itemBody');
+    if (!tbody) return;
+
+    let newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td class="text-center row-number"></td>
+        <td class="text-center">
+            <div class="unit-img-wrapper">
+                <input type="file" accept="image/*" class="unit-img-input" style="display:none;" onchange="previewUnitImage(this)">
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='75' height='55'><rect width='100%' height='100%' fill='%23F1F5F9'/><text x='50%' y='50%' fill='%2364748B' font-size='10' text-anchor='middle' dominant-baseline='middle'>+ Upload Foto</text></svg>" 
+                     class="unit-img-preview" 
+                     onclick="this.previousElementSibling.click()" 
+                     title="Klik untuk upload foto unit">
+            </div>
+        </td>
+        <td>
+            <textarea class="desc-input" oninput="autoResizeTextarea(this)" placeholder="Tulis deskripsi bebas di sini..."></textarea>
+        </td>
+        <td class="text-center"><input type="number" value="1" class="qty" oninput="calculateTotal()" style="text-align: center;"></td>
+        <td class="text-center"><input type="number" value="1" class="days" oninput="calculateTotal()" style="text-align: center;"></td>
+        <td class="text-right"><input type="text" value="0" class="price" oninput="calculateTotal()" style="text-align: right;"></td>
+        <td class="text-right row-total" style="font-weight: 600;">0</td>
+        <td class="text-center no-print">
+            <button type="button" onclick="deleteRow(this)" style="background: #EF4444; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer;">✕</button>
+        </td>
+    `;
+    
+    tbody.appendChild(newRow);
+    renumberRows();
+    calculateTotal();
+}
+
+function deleteRow(button) {
+    let rows = document.querySelectorAll('#itemBody tr');
+    if (rows.length > 1) {
+        button.closest('tr').remove();
+        renumberRows();
+        calculateTotal();
+    } else {
+        alert("Minimal harus ada 1 baris item dalam invoice!");
+    }
+}
+
+function renumberRows() {
+    let rows = document.querySelectorAll('#itemBody tr');
+    rows.forEach((row, index) => {
+        let numCell = row.querySelector('.row-number');
+        if (numCell) numCell.innerText = index + 1;
+    });
+}
+
+function calculateTotal() {
+    let grandTotal = 0;
+    let rows = document.querySelectorAll('#itemBody tr');
+
+    rows.forEach(function(row) {
+        let qtyInput = row.querySelector('.qty');
+        let daysInput = row.querySelector('.days');
+        let priceInput = row.querySelector('.price');
+
+        let qty = qtyInput ? (parseFloat(qtyInput.value) || 0) : 0;
+        let days = daysInput ? (parseFloat(daysInput.value) || 0) : 0;
+        let priceStr = priceInput ? priceInput.value.replace(/[^0-9]/g, '') : '0';
+        let price = parseFloat(priceStr) || 0;
+
+        let rowTotal = qty * days * price;
+        grandTotal += rowTotal;
+
+        let rowTotalCell = row.querySelector('.row-total');
+        if (rowTotalCell) rowTotalCell.innerText = rowTotal.toLocaleString('id-ID');
+    });
+
+    let grandTotalEl = document.getElementById('grandTotal');
+    if (grandTotalEl) grandTotalEl.innerText = 'Rp ' + grandTotal.toLocaleString('id-ID');
+    
+    hitungSummary();
+}
+
+function hitungSummary() {
+    let grandTotalEl = document.getElementById('grandTotal');
+    let diskonInputEl = document.getElementById('diskonInput');
+    let dpInputEl = document.getElementById('dpInput');
+    let sisaPelunasanEl = document.getElementById('sisaPelunasan');
+
+    if (!grandTotalEl || !sisaPelunasanEl) return;
+
+    let totalText = grandTotalEl.innerText;
+    let grandTotal = parseInt(totalText.replace(/[^0-9]/g, '')) || 0;
+
+    let diskonText = diskonInputEl ? diskonInputEl.innerText : '0';
+    let diskonValue = parseInt(diskonText.replace(/[^0-9]/g, '')) || 0;
+
+    let dpText = dpInputEl ? dpInputEl.innerText : '0';
+    let dpValue = parseInt(dpText.replace(/[^0-9]/g, '')) || 0;
+
+    let totalSetelahDiskon = grandTotal - diskonValue;
+    if (totalSetelahDiskon < 0) totalSetelahDiskon = 0;
+
+    let sisa = totalSetelahDiskon - dpValue;
+    if (sisa < 0) sisa = 0;
+
+    sisaPelunasanEl.innerText = "Rp " + sisa.toLocaleString('id-ID');
+}
+</script>
+
+</body>
+</html>

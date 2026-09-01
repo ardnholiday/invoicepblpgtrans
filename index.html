@@ -573,24 +573,26 @@
     updateInvoiceHeader();
     renderItems();
     
-    // Ganti GANTI_DENGAN_BIN_ID_ANDA dengan ID dari JSONBin Langkah 1
-const STATUS_API_URL = "https://api.jsonbin.io/v3/b/6a973342da38895dfe2c9444/latest"; 
+    // Ganti GANTI_BIN_ID_ANDA dengan Bin ID dari JSONBin
+    const BIN_ID = "6a973a4bf5f4af5e295e3a2a"; 
+    const STATUS_API_URL = `https://api.jsonbin.io/v3/b/${6a973a4bf5f4af5e295e3a2a}/latest`;
 
-async function checkSubscriptionStatus() {
-  try {
-    const response = await fetch(STATUS_API_URL);
+    async function checkSubscriptionStatus() {
+      try {
+        const response = await fetch(STATUS_API_URL, {
+          method: 'GET',
+          headers: {
+            'X-Bin-Meta': 'false' // Mengambil data murni tanpa metadata JSONBin
+          }
+        });
+
+    if (!response.ok) throw new Error("Gagal terhubung ke server lisensi");
+
     const data = await response.json();
-    
-    // Jika nilai "active" di JSONBin diubah menjadi false, kunci aplikasi
-    if (data.record.active === true) {
+
+    // Jika status "active" di JSONBin diubah menjadi false
+    if (data.active === false) {
       document.getElementById('expired-screen').classList.remove('hidden');
     }
-  } catch (error) {
-    console.error("Gagal memverifikasi status lisensi:", error);
-  }
-}
-
-checkSubscriptionStatus();
-  </script>
-</body>
+  } catch (error) { 
 </html>

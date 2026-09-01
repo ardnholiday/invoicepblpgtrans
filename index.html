@@ -590,9 +590,15 @@
 
     const data = await response.json();
 
-    // Jika status "active" di JSONBin diubah menjadi false
+     // Jika status "active" di JSONBin diubah menjadi false
     if (data.active === false) {
       document.getElementById('expired-screen').classList.remove('hidden');
     }
-  } catch (error) { 
+  } catch (error) {
+    console.error("Pemeriksaan lisensi gagal:", error);
+  }
+}
+
+// Jalankan fungsi
+checkSubscriptionStatus();
 </html>
